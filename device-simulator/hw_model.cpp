@@ -247,6 +247,9 @@
 #include "HWModel_sunhme.h"
 #include "HWModel_tulip.h"
 #include "HWModel_8139cp.h"
+
+#include "HWModel_gma500.h"
+
 #include <functional>
 #include <map>
 using namespace std;
@@ -535,6 +538,8 @@ void hw_model_internal_init() {
   INSERT_STAGE2_MODEL(tulip);
   // test_usb device --- dummy
   INSERT_MODEL(test_usb);
+
+  INSERT_MODEL(gma500);
 }
 
 ///

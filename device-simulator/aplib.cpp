@@ -7,10 +7,10 @@
 #include "shm.h"
 
 #include <assert.h>
+#include <chrono>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <time.h>
-#include <chrono>
 
 #include <map>
 #include <set>
@@ -66,37 +66,40 @@ static int use_dma;
 static bool use_stage2;
 // How long an AFL fuzzing epoch lasts
 static int64_t afl_epoch;
-static  bool test_probe;
-static  bool model_probe_fuzz;
-static  int model_mutate_prob = 10; // prob of mutating the value of the probing model
+static bool test_probe;
+static bool model_probe_fuzz;
+static int model_mutate_prob =
+    10; // prob of mutating the value of the probing model
 static int model_reset_time = 3;
-static uint64_t model_delay=0;
+static uint64_t model_delay = 0;
 // TODO: need to figure out the address of IRQ register
 // stores the milliseconds interval between triggering each IRQ,
 // This knob can be overriden by upper-level model
 static int use_irq;
-static std::chrono::_V2::steady_clock::time_point afl_last_epoch_end = chrono::steady_clock::now();
+static std::chrono::_V2::steady_clock::time_point afl_last_epoch_end =
+    chrono::steady_clock::now();
 
 void real_ap_init(void) {
   LOG_TO_FILE("qemu_run.log", "[Enter] real_ap_init");
 
-  if (sm) return;
-  
-  const char* shmid = getenv("SFP_SHMID");
+  if (sm)
+    return;
+
+  const char *shmid = getenv("SFP_SHMID");
   if (!shmid) {
     ERROR("SFP_SHMID environment variable not set");
     return;
   }
 
   string shmname = "/afl-proxy-" + string(shmid);
-  
+
   try {
     shm = new SHM<struct XXX>(shmname.c_str());
     if (!shm) {
       ERROR("Failed to create SHM object");
       return;
     }
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     ERROR("Exception creating SHM: " << e.what());
     return;
   }
@@ -116,7 +119,9 @@ again:
 
   // wait till this is ready
   // INFO("sm->ready = " << hexval(sm->ready));
-  INFO("sm->ready = " << hexval(sm->ready) << " &sm->ready offset = " << hexval((long long int)&(sm->ready) - (long long int)&sm));
+  INFO("sm->ready = " << hexval(sm->ready) << " &sm->ready offset = "
+                      << hexval((long long int)&(sm->ready) -
+                                (long long int)&sm));
   if (!sm->ready) {
     INFO("not ready");
     shm->close();
@@ -176,9 +181,11 @@ void watch_dog() {
   LOG_TO_FILE("qemu_run.log", "[watch_dog] enter while loop");
   while (1) {
     auto cur_time = chrono::steady_clock::now();
-    auto elapsed_secs = chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end).count();
+    auto elapsed_secs =
+        chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end)
+            .count();
     LOG_TO_FILE("qemu_run.log", "[watch_dog] elapsed_secs = " << elapsed_secs);
-    if (elapsed_secs > 60) {
+    if (elapsed_secs > 86400) {
       LOG_TO_FILE("qemu_run.log", "[watch_dog] elapsed_secs > 60");
       exit(0);
     }
@@ -186,7 +193,7 @@ void watch_dog() {
   }
 }
 
-static bool isEnabled=false;
+static bool isEnabled = false;
 void ap_init(void) {
   LOG_TO_FILE("qemu_run.log", "[Enter] ap_init");
   static bool initialized;
@@ -198,7 +205,7 @@ void ap_init(void) {
     assert(knob0.isPresented() && "SFP_DEV_MODEL is not set");
     init_hw_instance(knob0.getStringValue());
     init_stage2_hw_instance(knob0.getStringValue());
-    
+
     EnvKnob knob1("WAITGDB");
     if (knob1.isSet()) {
       outs() << "wait gdb, pid=" << getpid() << "\n";
@@ -238,7 +245,7 @@ void ap_init(void) {
     if (knob_stage2.isPresented() && knob_stage2.isSet()) {
       use_stage2 = true;
     }
-    
+
     EnvKnob knob_model_prob("USE_MODEL_PROB");
     if (knob_model_prob.isPresented() && use_stage2) {
       assert(get_stage2_hw_instance());
@@ -261,18 +268,15 @@ void ap_init(void) {
       test_probe = true;
     }
 
-
     /////////////////////////
     EnvKnob knob_mpf("MODEL_PROBE_FUZZ");
     if (knob_mpf.isPresented() && knob_mpf.isSet()) {
       model_probe_fuzz = true;
     }
 
-
     ////////////////////////////
     EnvKnob knob_mdl_reset_time("MODEL_RESET_TIME");
-    if (knob_mdl_reset_time.isPresented()
-       && knob_mdl_reset_time.isSet()) {
+    if (knob_mdl_reset_time.isPresented() && knob_mdl_reset_time.isSet()) {
       model_reset_time = knob_mdl_reset_time.getIntValue();
     }
 
@@ -282,7 +286,6 @@ void ap_init(void) {
       model_mutate_prob = knob_mutate_prob.getIntValue();
       INFO("Model Mutation Probability Set As: " << model_mutate_prob);
     }
-    
 
     // export device memory through shared memory
     EnvKnob knob6("EXPORT_DEVMEM");
@@ -294,15 +297,17 @@ void ap_init(void) {
 
     EnvKnob knob7("AP_DISABLED");
     if (knob7.isPresented() && knob7.isSet())
-      return;
-    isEnabled = true;
+      isEnabled = false;
+    else
+      isEnabled = true;
 
     if (use_stage2) {
       assert(get_stage2_hw_instance());
     }
-    watchdog_thread = new thread(watch_dog);
+    // 处于调试阶段，就取消watch_dog
+    // watchdog_thread = new thread(watch_dog);
   }
-  
+
   if (isEnabled)
     real_ap_init();
   LOG_TO_FILE("qemu_run.log", "[Exit] ap_init");
@@ -323,13 +328,18 @@ int ap_get_fuzz_data(uint8_t *dest, uint64_t addr, size_t size, int bar) {
   LOG_TO_FILE("qemu_run.log", "[Enter] ap_get_fuzz_data");
   static int counter;
   static uint64_t delay_counter = 0;
-  static std::chrono::_V2::steady_clock::time_point last_dev_restart = chrono::steady_clock::now();
+  static std::chrono::_V2::steady_clock::time_point last_dev_restart =
+      chrono::steady_clock::now();
   uint64_t zero = 0;
   uint64_t wrapped_addr;
   auto cur_time = chrono::steady_clock::now();
-  auto elapsed_secs = chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end).count();
-  auto secs_since_last_restart = chrono::duration_cast<chrono::seconds>(cur_time - last_dev_restart).count();
-  Stage2HWModel * stage2 = get_stage2_hw_instance();
+  auto elapsed_secs =
+      chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end)
+          .count();
+  auto secs_since_last_restart =
+      chrono::duration_cast<chrono::seconds>(cur_time - last_dev_restart)
+          .count();
+  Stage2HWModel *stage2 = get_stage2_hw_instance();
   uint64_t probe_mdl_input;
   uint64_t probe_input;
   // for probing
@@ -354,8 +364,9 @@ int ap_get_fuzz_data(uint8_t *dest, uint64_t addr, size_t size, int bar) {
         INFO("Device model resetted..");
         last_dev_restart = cur_time;
       }
-      get_hw_instance()->read((uint8_t*)&probe_mdl_input, addr, size, bar);
-      if (yes(model_mutate_prob) && fuzzdatasize) { //&& get_hw_instance()->getRestartCnt() > 0) {
+      get_hw_instance()->read((uint8_t *)&probe_mdl_input, addr, size, bar);
+      if (yes(model_mutate_prob) &&
+          fuzzdatasize) { //&& get_hw_instance()->getRestartCnt() > 0) {
         wrapped_addr = addr % fuzzdatasize;
         memcpy(dest, fuzzdata + wrapped_addr, size);
       } else {
@@ -394,7 +405,7 @@ int ap_get_fuzz_data(uint8_t *dest, uint64_t addr, size_t size, int bar) {
   wrapped_addr = addr % fuzzdatasize;
   if (wrapped_addr >= fuzzdatasize)
     goto end;
-  
+
   if (stage2 && use_stage2 && delay_counter > model_delay) {
     stage2->feedFuzzMMIOData(addr, dest, size, (fuzzdata + wrapped_addr));
   } else if (addr + size <= fuzzdatasize) {
@@ -434,7 +445,7 @@ void ap_set_fuzz_data(uint64_t data, uint64_t addr, size_t size, int bar) {
   // for probing
   get_hw_instance()->write(data, addr, size, bar);
   // intercept writes of DMA address
-  Stage2HWModel * stage2 = get_stage2_hw_instance();
+  Stage2HWModel *stage2 = get_stage2_hw_instance();
   if (stage2 && use_stage2) {
     stage2->captureDMARegistration(addr, data);
   }
@@ -448,7 +459,7 @@ void ap_set_fuzz_data(uint64_t data, uint64_t addr, size_t size, int bar) {
 
   if (!fuzzdatasize)
     return;
-  
+
   addr = addr % fuzzdatasize;
   if (addr >= fuzzdatasize)
     return;
@@ -462,7 +473,7 @@ void ap_log_pc(uint64_t rip) {
     ap_init();
   if (!sm)
     return;
-  INFO("ap_log_pc"<<hexval(rip));
+  INFO("ap_log_pc" << hexval(rip));
   sm->type = 0x01;
   memcpy(sm->data, &rip, sizeof(uint64_t));
   if (sem_post(&sm->semw) == -1) {
@@ -493,13 +504,13 @@ void ap_exit(void) {
       unreachable("error post semw");
     }
     // AP will exit anyway ... so why bother waiting?
-//     if (sem_wait(&sm->semr) == -1) {
-//       if (errno == EINTR) {        
-//         goto close;
-//       }
-//       unreachable("error wait semr");
-//     }
-// close:
+    //     if (sem_wait(&sm->semr) == -1) {
+    //       if (errno == EINTR) {
+    //         goto close;
+    //       }
+    //       unreachable("error wait semr");
+    //     }
+    // close:
     shm->close();
     delete shm;
   }
@@ -558,33 +569,36 @@ again:
 /// called by QEMU to trigger DMA data buffer fill -- through ML model or random
 /// data
 ///
-void ap_qemu_fuzz_dma_generic(uint8_t * buffer, int size) {
+void ap_qemu_fuzz_dma_generic(uint8_t *buffer, int size) {
   // INFO("QEMU DMA FUZZ");
-  Stage2HWModel * stage2 = get_stage2_hw_instance();
+  Stage2HWModel *stage2 = get_stage2_hw_instance();
   static uint64_t cnt;
   cnt++;
   // if (cnt < 100)
   //   return;
   if (fuzzdatasize == 0) {
-    for (int i=0; i<size; i++) {
+    for (int i = 0; i < size; i++) {
       buffer[i] = yes(model_mutate_prob) ? (uint8_t)rand() : buffer[i];
     }
     return;
   }
   if (use_stage2 && stage2) {
-    stage2->fuzzQEMU_DMABuffer(buffer, size, fuzzdata, fuzzdatasize, model_mutate_prob);
-    for (int i=0; i<size; i++) {
-      buffer[i] = yes(model_mutate_prob) ? fuzzdata[i % fuzzdatasize] : buffer[i];
+    stage2->fuzzQEMU_DMABuffer(buffer, size, fuzzdata, fuzzdatasize,
+                               model_mutate_prob);
+    for (int i = 0; i < size; i++) {
+      buffer[i] =
+          yes(model_mutate_prob) ? fuzzdata[i % fuzzdatasize] : buffer[i];
     }
   } else {
-    for (int i=0; i<size; i++) {
-      buffer[i] = yes(model_mutate_prob) ? fuzzdata[i % fuzzdatasize] : buffer[i];
+    for (int i = 0; i < size; i++) {
+      buffer[i] =
+          yes(model_mutate_prob) ? fuzzdata[i % fuzzdatasize] : buffer[i];
     }
   }
 }
 
 void ap_fill_dma_buffer() {
-  static bool secondary_dma_scanned =  true; // false;
+  static bool secondary_dma_scanned = true; // false;
   if (!use_dma)
     return;
 #if 0
@@ -622,13 +636,13 @@ void ap_fill_dma_buffer() {
   }
   get_hw_instance()->unlockDMASG();
 #else
-  Stage2HWModel * stage2 = get_stage2_hw_instance();
+  Stage2HWModel *stage2 = get_stage2_hw_instance();
   int dma_fuzz_sz = fuzzdatasize - MMIO_SIZE;
   if (dma_fuzz_sz < 0) {
     dma_fuzz_sz = 0;
   }
   auto cur_time = chrono::steady_clock::now();
-  
+
   if (stage2 && use_stage2) {
     if (!stage2->isLevel1DMASet()) {
       return;
@@ -637,15 +651,16 @@ void ap_fill_dma_buffer() {
       stage2->scanSecondaryDMABuffer();
     }
     stage2->feedFuzzDMAData(fuzzdata + MMIO_SIZE, dma_fuzz_sz, true);
-  } 
+  }
   // else if (stage2) {
   //   stage2->feedFuzzDMAData(fuzzdata + MMIO_SIZE, dma_fuzz_sz, false);
-  // } 
+  // }
   else {
     get_hw_instance()->feedRandomDMAData();
   }
   auto end_time = chrono::steady_clock::now();
-  auto elapsed_secs = chrono::duration_cast<chrono::microseconds>(end_time - cur_time).count();
+  auto elapsed_secs =
+      chrono::duration_cast<chrono::microseconds>(end_time - cur_time).count();
   // cerr << "DMA fill time: " << elapsed_secs << " us\n";
 #endif
 }
@@ -656,8 +671,10 @@ int ap_qemu_mmio_read(uint8_t *dest, uint64_t addr, size_t size, int bar) {
   static uint64_t cnt;
   uint64_t wrapped_addr;
   auto cur_time = chrono::steady_clock::now();
-  auto elapsed_secs = chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end).count();
-  Stage2HWModel * stage2 = get_stage2_hw_instance();
+  auto elapsed_secs =
+      chrono::duration_cast<chrono::seconds>(cur_time - afl_last_epoch_end)
+          .count();
+  Stage2HWModel *stage2 = get_stage2_hw_instance();
   // fuzz probing
   // try to reset model
   assert(ap_get_fuzz_file()[0]);
@@ -675,7 +692,7 @@ int ap_qemu_mmio_read(uint8_t *dest, uint64_t addr, size_t size, int bar) {
   if (!fuzzdatasize || get_hw_instance()->read(dest, addr, size, bar) != 0) {
     return -1;
   }
-  // Fuzz with some probability 
+  // Fuzz with some probability
   if (yes(model_mutate_prob)) { //&& get_hw_instance()->getRestartCnt() > 0) {
     wrapped_addr = addr % fuzzdatasize;
     if (stage2 && use_stage2) {
@@ -685,7 +702,7 @@ int ap_qemu_mmio_read(uint8_t *dest, uint64_t addr, size_t size, int bar) {
     }
     LOG_TO_FILE("qemu_run.log", "[Exit] ap_qemu_mmio_read");
     return 0;
-  } 
+  }
   LOG_TO_FILE("qemu_run.log", "[Exit] ap_qemu_mmio_read");
   return -1;
 }

@@ -9,11 +9,16 @@
 #include <stdlib.h>
 #include <string>
 #include <stdint.h>
+#include <iostream>
 
 class EnvKnob {
 public:
   EnvKnob(const std::string name) : name(name), value("") {
+    std::cerr << "enter EnvKnob constructor" << std::endl;
+    std::cerr << "name = " << name << std::endl;
     auto *val = getenv(name.c_str());
+    std::cerr << "val = " << val << std::endl;
+
     if (val == nullptr)
       return;
     value = std::string(val);
