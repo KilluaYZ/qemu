@@ -16,7 +16,7 @@ public:
               {PCI_BAR_TYPE_MMIO, 128 * 1024 * 1024},
               {PCI_BAR_TYPE_MMIO, 256 * 1024 * 1024},
               {PCI_BAR_TYPE_MMIO, 4 * 1024 * 1024},
-              {PCI_BAR_TYPE_MMIO, 1024 * 1024}});
+              {PCI_BAR_TYPE_MMIO, 16 * 1024 * 1024}});
   }
   virtual ~HWModel_amdgpu_sienna_cichlid() {};
   virtual void restart_device() final { probe_len = 0; };
@@ -57,101 +57,123 @@ public:
       return size;
     case (0x4): {
       switch (cnt_0x4) {
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:398
-      case 0x0:
+      case 0x6:
         set_value(dest, 0x28211407, size);
         break;
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:412
-      case 0x2:
+      case 0x8:
         set_value(dest, 0x000a0000, size);
         break;
-      case 0x4:
-      case 0x5:
-      case 0x7:
       case 0x9:
-      case 0xb:
-      case 0xd:
-        set_value(dest, 0x00000000, size);
-        break;
-      case 0x3:
         set_value(dest, 0x00000044, size);
         break;
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:426
+      case 0xb:
+      case 0xc:
+      case 0xd:
+      case 0xe:
+      case 0xf:
+      case 0x10:
       case 0x11:
-        set_value(dest, 0x53445049, size);
-        break;
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:432
       case 0x12:
+      case 0x13:
+      case 0x14:
         set_value(dest, 0x00000000, size);
         break;
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:1258
-      case 0x14:
+      case 0x17:
+        set_value(dest, 0x53445049, size);
+        break;
+      case 0x18:
+        set_value(dest, 0x00000000, size);
+        break;
+      case 0x1a:
         set_value(dest, 0x00000001, size);
         break;
-      // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:1259
-      case 0x15:
+      case 0x1b:
         set_value(dest, 0x00000056, size);
         break;
       // drivers/gpu/drm/amd/amdgpu/amdgpu_discovery.c:1273
-      case 0x16:
-        set_value(dest, 0x000b0007, size);
+      case 0x1c:
+        set_value(dest, 0x000b0009, size);
         break;
       // / drivers / gpu / drm / amd / amdgpu / amdgpu_discovery.c:2220
-      case 0x17:
+      case 0x1d:
         set_value(dest, 0x04090000, size);
         break;
-      case 0x18:
+      case 0x1e:
         set_value(dest, 0x00280003, size);
         break;
       // / drivers / gpu / drm / amd / amdgpu / amdgpu_discovery.c:1761
-      case 0x19:
+      case 0x1f:
         set_value(dest, 0x00060000, size);
         break;
-      case 0x1a:
+      case 0x20:
         set_value(dest, 0x00ff0000, size);
         break;
-      case 0x1b:
-        set_value(dest, 0x00090000, size);
-        break;
-      case 0x1c:
-        set_value(dest, 0x00010000, size);
-        break;
-      case 0x1d:
-        set_value(dest, 0x00090000, size);
-        break;
-      case 0x1e:
-        set_value(dest, 0x002a0000, size);
-        break;
-      case 0x1f:
-        set_value(dest, 0x00040000, size);
-        break;
-      case 0x20:
-        set_value(dest, 0x000c0000, size);
-        break;
       case 0x21:
-        set_value(dest, 0x00010000, size);
+        set_value(dest, 0x00090000, size);
         break;
       case 0x22:
-        set_value(dest, 0x000f0000, size);
+        set_value(dest, 0x00010000, size);
         break;
       case 0x23:
-        set_value(dest, 0x000c0000, size);
+        set_value(dest, 0x00090000, size);
         break;
       case 0x24:
-        set_value(dest, 0x00000000, size);
+        set_value(dest, 0x002a0000, size);
+        break;
+      case 0x25:
+        set_value(dest, 0x00040000, size);
+        break;
+      case 0x26:
+        set_value(dest, 0x000c0000, size);
+        break;
+      case 0x27:
+        set_value(dest, 0x00010000, size);
+        break;
+      case 0x28:
+        set_value(dest, 0x000f0000, size);
+        break;
+      case 0x29:
+        set_value(dest, 0x000c0000, size);
+        break;
+      case 0x2a:
+        set_value(dest, 0x006c0000, size);
+        break;
+      case 0x2b:
+        set_value(dest, 0x01060000, size);
+        break;
+      case 0x2c:
+        set_value(dest, 0x00040000, size);
+        break;
+      case 0x2d:
+        set_value(dest, 0x000d0000, size);
+        break;
+      case 0x2e:
+        set_value(dest, 0x00000003, size);
+        break;
+      case 0xa07:
+        set_value(dest, 0x00000002, size);
         break;
       default:
-        set_value(dest, 0x4 << 20 | cnt_0x4, size);
+        set_value(dest, 0x4 << 16 | cnt_0x4, size);
         break;
       }
       cnt_0x4++;
       return size;
     }
+    case 0x8c:
+      set_value(dest, 0x00000002, size);
+      return size;
     case (0x378c):
       set_value(dest, 0x1, size);
       return size;
     case 0x3794:
       set_value(dest, 0x00000010, size);
+      return size;
+    case 0x40a07:
+      set_value(dest, 0x00000002, size);
+      return size;
+    case 0xc0009c:
+      set_value(dest, 0x00000008, size);
       return size;
     default:
       break;
