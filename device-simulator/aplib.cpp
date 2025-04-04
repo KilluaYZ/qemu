@@ -24,12 +24,15 @@
 
 using namespace std;
 
+// 添加静态计数器用于生成唯一ID
+static uint64_t log_id_counter = 0;
+
 // a list of dma addresses -- those are physical addresses
 set<uint64_t> dma_addrs;
 
 extern "C" {
 #define MMIO_SIZE (1024)
-// #define DMA_SIZE (4096 * 10)
+// #define DMA_SIZE (4096 * 10)amdgpu_read_bios_from_rom
 // for serializing qemu thread calling IPC
 static pthread_mutex_t shm_ipc_lock;
 
@@ -325,7 +328,7 @@ int ap_fetch_fuzz_data_rand(char *dest, uint64_t addr, size_t size) {
 }
 
 int ap_get_fuzz_data(uint8_t *dest, uint64_t addr, size_t size, int bar) {
-  LOG_TO_FILE("qemu_run.log", "[Enter] ap_get_fuzz_data");
+  LOG_TO_FILE("qemu_run.log", "[Enter] ap_get_fuzz_data dest: 0x" << std::hex << (uint64_t)dest << std::dec << " addr: 0x" << std::hex << addr << std::dec << " size: " << size << " bar: " << bar);
   static int counter;
   static uint64_t delay_counter = 0;
   static std::chrono::_V2::steady_clock::time_point last_dev_restart =
@@ -416,13 +419,13 @@ int ap_get_fuzz_data(uint8_t *dest, uint64_t addr, size_t size, int bar) {
 end:
   if (IS_DUMP_R) {
     if (dump_rw_addr_to_file) {
-      LOG_TO_FILE(dump_rw_addr_filename, "read "
+      LOG_TO_FILE(dump_rw_addr_filename, "[" << log_id_counter++ << "] read "
                                              << size << " byte, bar " << bar
                                              << " @ " << hexval(addr) << "="
                                              << hexval(*(uint64_t *)(dest)));
 
     } else {
-      INFO("read " << size << " byte, bar " << bar << " @ " << hexval(addr)
+      INFO("[" << log_id_counter++ << "] read " << size << " byte, bar " << bar << " @ " << hexval(addr)
                    << "=" << hexval(*(uint64_t *)(dest)));
     }
   }

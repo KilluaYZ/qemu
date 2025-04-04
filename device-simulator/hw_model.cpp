@@ -41,6 +41,7 @@
 #include "HWModel_xpad.h"
 #include "HWModel_zd1201.h"
 #include "HWModel_zd1211rw.h"
+#include "HWModel_holtek_kbd.h"
 // pci
 #include "HWModel_3c59x.h"
 #include "HWModel_3w_9xxx.h"
@@ -53,6 +54,14 @@
 #include "HWModel_ambassador.h"
 #include "HWModel_amd_xgbe.h"
 #include "HWModel_amdgpu.h"
+
+#include "HWModel_amdgpu_kaveri.h"
+#include "HWModel_amdgpu_vega10.h"
+#include "HWModel_amdgpu_bonaire.h"
+#include "HWModel_amdgpu_aldebaran.h"
+#include "HWModel_amdgpu_navy_flounder.h"
+#include "HWModel_amdgpu_sienna_cichlid.h"
+
 #include "HWModel_anydev.h"
 #include "HWModel_apex.h"
 #include "HWModel_applicom.h"
@@ -538,8 +547,16 @@ void hw_model_internal_init() {
   INSERT_STAGE2_MODEL(tulip);
   // test_usb device --- dummy
   INSERT_MODEL(test_usb);
+  INSERT_MODEL(holtek_kbd);
 
+  // new added for debug
   INSERT_MODEL(gma500);
+  INSERT_MODEL(amdgpu_kaveri)
+  INSERT_MODEL(amdgpu_vega10)
+  INSERT_MODEL(amdgpu_bonaire)
+  INSERT_MODEL(amdgpu_aldebaran)
+  INSERT_MODEL(amdgpu_navy_flounder)
+  INSERT_MODEL(amdgpu_sienna_cichlid)
 }
 
 ///
