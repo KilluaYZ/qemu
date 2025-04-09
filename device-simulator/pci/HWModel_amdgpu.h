@@ -6,10 +6,12 @@
 
 #include "HWModel.h"
 
-class HWModel_amdgpu : public HWModel {
+class HWModel_amdgpu : public HWModel
+{
 public:
   HWModel_amdgpu()
-      : HWModel("amdgpu", 0x1002, 0x1304, 0, 0, 0x30000), probe_len(0) {
+      : HWModel("amdgpu", 0x1002, 0x1304, 0, 0, 0x30000), probe_len(0)
+  {
     setupBar({{PCI_BAR_TYPE_PIO, 16 * 1024},
               {PCI_BAR_TYPE_MMIO, 8 * 1024 * 1024},
               {PCI_BAR_TYPE_MMIO, 128 * 1024 * 1024},
@@ -17,16 +19,19 @@ public:
               {PCI_BAR_TYPE_MMIO, 4 * 1024 * 1024},
               {PCI_BAR_TYPE_MMIO, 1024 * 1024}});
   }
-  virtual ~HWModel_amdgpu(){};
+  virtual ~HWModel_amdgpu() {};
   virtual void restart_device() final { probe_len = 0; };
-  virtual int read(uint8_t *dest, uint64_t addr, size_t size) final {
+  virtual int read(uint8_t *dest, uint64_t addr, size_t size) final
+  {
     if (probe_len > 15)
       return 0;
-    switch (addr) {
+    switch (addr)
+    {
     case (0x0):
       *((uint8_t *)dest) = 0xaa;
       break;
-    case (0xc20c): {
+    case (0xc20c):
+    {
       static int cnt;
       if (cnt < 2)
         *((uint32_t *)dest) = 0x0;
@@ -35,7 +40,8 @@ public:
       cnt++;
       break;
     }
-    case (0xc91c): {
+    case (0xc91c):
+    {
       static int cnt;
       if (cnt == 0)
         *((uint32_t *)dest) = 0x01010101;
@@ -61,15 +67,18 @@ public:
     case (0xe60):
       *((uint32_t *)dest) = 0x0;
       break;
-    case (0xd048): {
+    case (0xd048):
+    {
       static int cnt;
       if (cnt == 0)
         *((uint32_t *)dest) = 0x0;
       cnt++;
       break;
     }
-    default: {
-      switch (size) {
+    default:
+    {
+      switch (size)
+      {
       case (1):
         *((uint8_t *)dest) = 0;
         break;
@@ -88,7 +97,7 @@ public:
     probe_len++;
     return size;
   };
-  virtual void write(uint64_t data, uint64_t addr, size_t size) final{};
+  virtual void write(uint64_t data, uint64_t addr, size_t size) final {};
 
 private:
   int probe_len;

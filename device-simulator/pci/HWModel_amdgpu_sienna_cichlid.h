@@ -109,10 +109,10 @@ public:
         set_value(dest, 0x00ff0000, size);
         break;
       case 0x21:
-        set_value(dest, 0x00090000, size);
+        set_value(dest, 0x000e0000, size);
         break;
       case 0x22:
-        set_value(dest, 0x00010000, size);
+        set_value(dest, 0x00010003, size);
         break;
       case 0x23:
         set_value(dest, 0x00090000, size);

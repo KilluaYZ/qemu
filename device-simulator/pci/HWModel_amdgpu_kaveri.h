@@ -39,93 +39,27 @@ public:
   }
 
   virtual int read(uint8_t *dest, uint64_t addr, size_t size) final {
-    // LOG_TO_FILE("qemu_run.log", "HWModel_amdgpu_kaveri::read dest: 0x" <<
-    // std::hex << (uint64_t)dest << std::dec << " addr: 0x" << std::hex << addr
-    // << std::dec << " size: " << size);
     INFO("HWModel_amdgpu_kaveri::read dest: 0x"
          << std::hex << (uint64_t)dest << std::dec << " addr: 0x" << std::hex
          << addr << std::dec << " size: " << size);
-
+    static int cnt_0x4 = 0;
     switch (addr) {
-    case (0x98):
-      set_value(dest, 0x55, size);
+    case (0x4): {
+      switch (cnt_0x4) {
+      default:
+        set_value(dest, 0x4 << 16 | cnt_0x4, size);
+        break;
+      }
+      cnt_0x4++;
       return size;
-    case (0xa3):
-      set_value(dest, 0xaa, size);
-      return size;
+    }
+    default:
+      break;
     }
 
     set_value(dest, addr, size);
 
     return size;
-
-    // if (probe_len > 15)
-    //   return 0;
-    // switch (addr) {
-    // case (0x0):
-    //   *((uint8_t *)dest) = 0xaa;
-    //   break;
-    // case (0xc20c): {
-    //   static int cnt;
-    //   if (cnt < 2)
-    //     *((uint32_t *)dest) = 0x0;
-    //   if (cnt == 0)
-    //     *((uint32_t *)dest) = 0x0;
-    //   cnt++;
-    //   break;
-    // }
-    // case (0xc91c): {
-    //   static int cnt;
-    //   if (cnt == 0)
-    //     *((uint32_t *)dest) = 0x01010101;
-    //   if (cnt == 1)
-    //     *((uint32_t *)dest) = 0x0;
-    //   if (cnt == 2)
-    //     *((uint32_t *)dest) = 0x0;
-    //   cnt++;
-    //   break;
-    // }
-    // case (0xd200):
-    //   *((uint32_t *)dest) = 0x0;
-    //   break;
-    // case (0xda00):
-    //   *((uint32_t *)dest) = 0x0;
-    //   break;
-    // case (0xd010):
-    //   *((uint32_t *)dest) = 0x0;
-    //   break;
-    // case (0xd848):
-    //   *((uint32_t *)dest) = 0x0ff0000;
-    //   break;
-    // case (0xe60):
-    //   *((uint32_t *)dest) = 0x0;
-    //   break;
-    // case (0xd048): {
-    //   static int cnt;
-    //   if (cnt == 0)
-    //     *((uint32_t *)dest) = 0x0;
-    //   cnt++;
-    //   break;
-    // }
-    // default: {
-    //   switch (size) {
-    //   case (1):
-    //     *((uint8_t *)dest) = 1;
-    //     break;
-    //   case (2):
-    //     *((uint16_t *)dest) = 1;
-    //     break;
-    //   case (4):
-    //     *((uint32_t *)dest) = 1;
-    //     break;
-    //   default:
-    //     break;
-    //   }
-    // }
-    // }
-
-    // probe_len++;
-    // return size;
   };
   virtual void write(uint64_t data, uint64_t addr, size_t size) final {};
 
