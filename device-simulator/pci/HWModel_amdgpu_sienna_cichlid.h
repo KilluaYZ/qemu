@@ -56,7 +56,7 @@ public:
       set_value(dest, 0x80000000, size);
       return size;
     case (0x4): {
-      switch (cnt_0x4) {
+      switch (cnt_0x4 - 0x3) {
       case 0x6:
         set_value(dest, 0x28211407, size);
         break;
@@ -171,6 +171,9 @@ public:
       return size;
     case 0x40a07:
       set_value(dest, 0x00000002, size);
+      return size;
+    case 0xcc009c:
+      set_value(dest, 0x00000008, size);
       return size;
     case 0xc0009c:
       set_value(dest, 0x00000008, size);
