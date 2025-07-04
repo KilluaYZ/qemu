@@ -1,4 +1,0 @@
-config RFVD_PCI
-    bool
-    default y if PCI_DEVICES
-    depends on PCI
